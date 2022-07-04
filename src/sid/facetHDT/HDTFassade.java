@@ -115,72 +115,84 @@ public class HDTFassade {
     
     // These methods only retrieve the URIs, not the rdfs:label ones 
     // Building outgoing facets for a given URI
-    public Map<String, Set<String>> buildOutgoingFacetsSearchingHDT (String uri) throws NotFoundException {
+    public Map<String, Set<String>> buildOutgoingFacetsSearchingHDT (String uri) {
     	Map<String, Set<String>> result = new HashMap<String, Set<String>>(); 
-    	IteratorTripleString it = hdt.search(uri, "", "");
-    	TripleString aux = null;
-    	String auxPred = null;
-    	while (it.hasNext()) {
-    		aux = it.next(); 
-    		auxPred = aux.getPredicate().toString(); 
-    		if (!result.containsKey(auxPred)) {
-    			result.put(auxPred, new HashSet<String> ());
-    		}
-    		result.get(auxPred).add(aux.getObject().toString()); 
+    	try {
+	    	IteratorTripleString it = hdt.search(uri, "", "");
+	    	TripleString aux = null;
+	    	String auxPred = null;
+	    	while (it.hasNext()) {
+	    		aux = it.next(); 
+	    		auxPred = aux.getPredicate().toString(); 
+	    		if (!result.containsKey(auxPred)) {
+	    			result.put(auxPred, new HashSet<String> ());
+	    		}
+	    		result.get(auxPred).add(aux.getObject().toString()); 
+	    	}
+    	}
+    	catch (NotFoundException e) {
+    		System.err.println(uri + " not found as subject"); 
     	}
     	return result; 
     }
     
     // Building incomingfacets for a given URI
     // This method is expected to be more expensive than outgoingFacets (given the underlying basic structure)
-    public Map<String, Set<String>> buildIncomingFacetsSearchingHDT (String uri) throws NotFoundException {
+    public Map<String, Set<String>> buildIncomingFacetsSearchingHDT (String uri) {
     	Map<String, Set<String>> result = new HashMap<String, Set<String>>(); 
-    	IteratorTripleString it = hdt.search("", "", uri);
-    	TripleString aux = null;
-    	String auxPred = null;
-    	while (it.hasNext()) {
-    		aux = it.next(); 
-    		auxPred = aux.getPredicate().toString(); 
-    		if (!result.containsKey(auxPred)) {
-    			result.put(auxPred, new HashSet<String> ());
-    		}
-    		result.get(auxPred).add(aux.getSubject().toString()); 
+    	try {
+	    	IteratorTripleString it = hdt.search("", "", uri);
+	    	TripleString aux = null;
+	    	String auxPred = null;
+	    	while (it.hasNext()) {
+	    		aux = it.next(); 
+	    		auxPred = aux.getPredicate().toString(); 
+	    		if (!result.containsKey(auxPred)) {
+	    			result.put(auxPred, new HashSet<String> ());
+	    		}
+	    		result.get(auxPred).add(aux.getSubject().toString()); 
+	    	}
+    	}
+    	catch (NotFoundException e) {
+    		System.err.println(uri +" not found as object"); 
     	}
     	return result; 
     }
 
-    public Map<String, Set<String>> buildOutgoingFacetsSearchingDict (String uri) throws NotFoundException {
+    public Map<String, Set<String>> buildOutgoingFacetsSearchingDict (String uri) {
     	Map<Long, Set<Long>> auxResult = new HashMap<Long, Set<Long>>(); 
     	long queriedId = hdt.getDictionary().stringToId(uri, TripleComponentRole.SUBJECT); 
-    	if (queriedId == -1) throw new NotFoundException(); 
-    	IteratorTripleID it = hdt.getTriples().search(new TripleID(queriedId, 0, 0));
-    	TripleID aux = null; 
-    	long auxPred = -1; 
-    	while (it.hasNext()) {
-    		aux = it.next();
-    		auxPred = aux.getPredicate(); 
-    		if (!auxResult.containsKey(auxPred)) {
-    			auxResult.put(auxPred, new HashSet<Long>()); 
-    		}
-    		auxResult.get(auxPred).add(aux.getObject()); 
+    	if (queriedId >= 1) {
+	    	IteratorTripleID it = hdt.getTriples().search(new TripleID(queriedId, 0, 0));
+	    	TripleID aux = null; 
+	    	long auxPred = -1; 
+	    	while (it.hasNext()) {
+	    		aux = it.next();
+	    		auxPred = aux.getPredicate(); 
+	    		if (!auxResult.containsKey(auxPred)) {
+	    			auxResult.put(auxPred, new HashSet<Long>()); 
+	    		}
+	    		auxResult.get(auxPred).add(aux.getObject()); 
+	    	}
     	}
-    	return translateFacetIDs(auxResult); 
+	    	return translateFacetIDs(auxResult); 
     }
 
-    public Map<String, Set<String>> buildIncomingFacetsSearchingDict (String uri) throws NotFoundException {
+    public Map<String, Set<String>> buildIncomingFacetsSearchingDict (String uri) {
     	Map<Long, Set<Long>> auxResult = new HashMap<Long, Set<Long>>(); 
     	long queriedId = hdt.getDictionary().stringToId(uri, TripleComponentRole.OBJECT); 
-    	if (queriedId == -1) throw new NotFoundException(); 
-    	IteratorTripleID it = hdt.getTriples().search(new TripleID(0, 0, queriedId));
-    	TripleID aux = null; 
-    	long auxPred = -1; 
-    	while (it.hasNext()) {
-    		aux = it.next();
-    		auxPred = aux.getPredicate(); 
-    		if (!auxResult.containsKey(auxPred)) {
-    			auxResult.put(auxPred, new HashSet<Long>()); 
-    		}
-    		auxResult.get(auxPred).add(aux.getSubject()); 
+    	if (queriedId >= 1) {
+	    	IteratorTripleID it = hdt.getTriples().search(new TripleID(0, 0, queriedId));
+	    	TripleID aux = null; 
+	    	long auxPred = -1; 
+	    	while (it.hasNext()) {
+	    		aux = it.next();
+	    		auxPred = aux.getPredicate(); 
+	    		if (!auxResult.containsKey(auxPred)) {
+	    			auxResult.put(auxPred, new HashSet<Long>()); 
+	    		}
+	    		auxResult.get(auxPred).add(aux.getSubject()); 
+	    	}
     	}
     	return translateFacetIDs(auxResult); 
     }
@@ -203,24 +215,35 @@ public class HDTFassade {
 
     // These methods only retrieve the URIs, not the rdfs:label ones 
     // Building outgoing facets for a given URI
-    public Map<String, Set<List<String>>> buildOutgoingFacetsSearchingLabelsHDT (String uri) throws NotFoundException {
+    public Map<String, Set<List<String>>> buildOutgoingFacetsSearchingLabelsHDT (String uri) {
+ 
     	Map<String, Set<List<String>>> result = new HashMap<String, Set<List<String>>>(); 
-    	IteratorTripleString it = hdt.search(uri, "", "");
-    	TripleString aux = null;
-    	String auxPred = null;
-    	while (it.hasNext()) {
-    		aux = it.next(); 
-    		auxPred = aux.getPredicate().toString(); 
-    		if (!result.containsKey(auxPred)) {
-    			result.put(auxPred, new HashSet<List<String>> ());
-    		}
-    		List<String> auxList = new ArrayList<String>(); 
-    		auxList.add(aux.getObject().toString()); 
-    		IteratorTripleString labelIt = hdt.search(aux.getObject(), LABEL_URI, ""); 
-    		while (labelIt.hasNext()) {
-    			auxList.add(labelIt.next().getObject().toString()); 
-    		}
-    		result.get(auxPred).add(auxList); 
+    	try {
+	    	IteratorTripleString it = hdt.search(uri, "", "");
+	    	TripleString aux = null;
+	    	String auxPred = null;
+	    	while (it.hasNext()) {
+	    		aux = it.next(); 
+	    		auxPred = aux.getPredicate().toString(); 
+	    		if (!result.containsKey(auxPred)) {
+	    			result.put(auxPred, new HashSet<List<String>> ());
+	    		}
+	    		List<String> auxList = new ArrayList<String>(); 
+	    		auxList.add(aux.getObject().toString()); 
+	    		try {
+		    		IteratorTripleString labelIt = hdt.search(aux.getObject(), LABEL_URI, ""); 
+		    		while (labelIt.hasNext()) {
+		    			auxList.add(labelIt.next().getObject().toString()); 
+		    		}
+	    		}
+	    		catch (NotFoundException e) {
+	    			System.err.println(aux.getObject() + "Label not found"); 
+	    		}
+	    		result.get(auxPred).add(auxList); 
+	    	}
+    	}
+    	catch (NotFoundException e) {
+    		System.err.println(uri +" not found as subject"); 
     	}
     	return result; 
     }
@@ -229,24 +252,41 @@ public class HDTFassade {
     // This method is expected to be more expensive than outgoingFacets (given the underlying basic structure)
 
     
-    public Map<String, Set<List<String>>> buildIncomingFacetsSearchingLabelsHDT (String uri) throws NotFoundException {
+    public Map<String, Set<List<String>>> buildIncomingFacetsSearchingLabelsHDT (String uri) {
     	Map<String, Set<List<String>>> result = new HashMap<String, Set<List<String>>>(); 
-    	IteratorTripleString it = hdt.search("", "", uri);
-    	TripleString aux = null;
-    	String auxPred = null;
-    	while (it.hasNext()) {
-    		aux = it.next(); 
-    		auxPred = aux.getPredicate().toString(); 
-    		if (!result.containsKey(auxPred)) {
-    			result.put(auxPred, new HashSet<List<String>> ());
-    		}
-    		List<String> auxList = new ArrayList<String>(); 
-    		auxList.add(aux.getSubject().toString()); 
-    		IteratorTripleString labelIt = hdt.search(aux.getSubject(), LABEL_URI, ""); 
-    		while (labelIt.hasNext()) {
-    			auxList.add(labelIt.next().getObject().toString()); 
-    		}
-    		result.get(auxPred).add(auxList); 
+    	try {
+	    	IteratorTripleString it = hdt.search("", "", uri);
+	    	TripleString aux = null;
+	    	String auxPred = null;
+	    	while (it.hasNext()) {
+	    		aux = it.next(); 
+	    		auxPred = aux.getPredicate().toString(); 
+	    		if (!result.containsKey(auxPred)) {
+	    			result.put(auxPred, new HashSet<List<String>> ());
+	    		}
+	    		List<String> auxList = new ArrayList<String>(); 
+	    		auxList.add(aux.getSubject().toString()); 
+	    		
+	    		try {
+		    		IteratorTripleString labelIt = hdt.search(aux.getSubject().toString(), LABEL_URI, "");  
+	
+		    		while (labelIt.hasNext()) {
+		    			auxList.add(labelIt.next().getObject().toString()); 
+		    		}
+	    		}
+	    		catch(NotFoundException e ) {
+	    			// it can happen that we don't find the label
+	    			e.printStackTrace();
+	    			System.err.println(aux.getSubject() + " Label not found"); 
+	    		}
+	    		catch (Exception e) {
+	    			e.printStackTrace();
+	    		}
+	    		result.get(auxPred).add(auxList); 
+	    	}
+    	}
+    	catch (NotFoundException e) {
+    		System.err.println(uri+" not found as object"); 
     	}
     	return result; 
     }
@@ -307,7 +347,7 @@ public class HDTFassade {
     	return results; 
     }
     
-    public long calculateOutDegreeFromURI (String uri) throws NotFoundException{
+    public long calculateOutDegreeFromURI (String uri) {
     	long outDegree = 0;
     	try {
 	    	IteratorTripleString it = hdt.search(uri, "", ""); 
@@ -321,7 +361,7 @@ public class HDTFassade {
 	    }
     	return outDegree; 
     }
-    public long calculateInDegreeFromURI (String uri) throws NotFoundException{
+    public long calculateInDegreeFromURI (String uri) {
     	long inDegree = 0; 
     	try {
 	    	IteratorTripleString it = hdt.search("", "", uri);

@@ -21,6 +21,7 @@ public class SingleFacetTime {
 	public static final String HDT_FILE_OPTION = "hdtFile"; 
 	public static final String URI_OPTION= "uri"; 
 	public static final String DIRECTION_OPTION="direction"; 
+	public static final String VERBOSE_OPTION="v";
 	public static final String HELP_OPTION = "help"; 
 	public static final Double NANO=1000000000.0; 
 
@@ -29,7 +30,8 @@ public class SingleFacetTime {
 		Options options = new Options();
 		options.addOption(HDT_FILE_OPTION, true, "HDT Filename");
 		options.addOption(URI_OPTION, true, "URI to calculate the facets from");
-		options.addOption(DIRECTION_OPTION, true, "direction: incoming, outgoing, both"); 
+		options.addOption(DIRECTION_OPTION, true, "direction: incoming, outgoing, both");
+		options.addOption(VERBOSE_OPTION, false, "display all the retrieved information"); 
 		options.addOption(HELP_OPTION, false, "display this help"); 
 
 		try  {
@@ -41,6 +43,7 @@ public class SingleFacetTime {
 				System.exit(0);
 			} 
 			
+			boolean verboseMode = cmd.hasOption(VERBOSE_OPTION); 
 			String HDTFilename = cmd.getOptionValue(HDT_FILE_OPTION); 	
 			String uri = cmd.getOptionValue(URI_OPTION);
 			Direction dir = Direction.valueOf(cmd.getOptionValue(DIRECTION_OPTION).toUpperCase()); 
@@ -148,8 +151,20 @@ public class SingleFacetTime {
 				sum = 0; 
 				labels = 0; 
 				for (String key: inFacetsLabelsHDT.keySet() ) {
+					if (verboseMode) {
+						System.out.println("--> " +key); 
+					}
 					sum += inFacetsLabelsHDT.get(key).size();
 					for (List<String> l: inFacetsLabelsHDT.get(key)) {
+						if (verboseMode) {
+							if (l.size()>0) {
+								System.out.println("\t"+l.get(0)); 
+								for (int i=1; i<l.size(); i++) {
+									System.out.println("\t\t"+l.get(i)); 
+								}
+							}
+						}
+						
 						labels += l.size(); 
 					}
 				}
@@ -173,8 +188,19 @@ public class SingleFacetTime {
 				sum = 0; 
 				labels = 0; 
 				for (String key: outFacetsLabelsHDT.keySet() ) {
+					if (verboseMode) {
+						System.out.println("--> " +key); 
+					}
 					sum += outFacetsLabelsHDT.get(key).size();
 					for (List<String> l: outFacetsLabelsHDT.get(key)) {
+						if (verboseMode) {
+							if (l.size()>0) {
+								System.out.println("\t"+l.get(0)); 
+								for (int i=1; i<l.size(); i++) {
+									System.out.println("\t\t"+l.get(i)); 
+								}
+							}
+						}
 						labels+=outFacetsHDT.get(key).size(); 
 					}
 				}
