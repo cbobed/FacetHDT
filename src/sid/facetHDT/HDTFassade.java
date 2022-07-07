@@ -33,11 +33,25 @@ public class HDTFassade {
 	   this.load(hdtDump); 
 	}
 	
+	public HDTFassade(String hdtDump, boolean saveMemory) {
+	   this.load(hdtDump, saveMemory); 
+	}
+	
     private void load(String hdtDump){
+    	load(hdtDump, false); 
+    }
+	
+    private void load(String hdtDump, boolean saveMemory){
         try {
-        	// this one requires less memory (map/mapIndexed vs load/loadIndexed)
-        	//hdt = HDTManagerImpl.mapIndexedHDT(hdtDump, null);
-            hdt = HDTManager.loadIndexedHDT(hdtDump);
+
+            if (saveMemory) {
+            	// this one requires less memory (map/mapIndexed vs load/loadIndexed)
+            	hdt = HDTManagerImpl.mapIndexedHDT(hdtDump, null); 
+            }
+            else {
+                hdt = HDTManager.loadIndexedHDT(hdtDump);
+            }
+            
         	System.out.println(hdt.getTriples().getNumberOfElements() + " triples in the hdt file "); 
 
         } catch (IOException e) {
@@ -299,9 +313,9 @@ public class HDTFassade {
     	LongStream.range(1, hdt.getDictionary().getNshared()+1)
     				.parallel()
     				.forEach(x -> {
-    					long in = calculateInDegreeFromID(x); 
-    					long out = calculateOutDegreeFromID(x);
-    					long degree = in + out; 
+    					long inDegree = calculateInDegreeFromID(x); 
+    					long outDegree = calculateOutDegreeFromID(x);
+    					long degree = inDegree + outDegree; 
     					String uri = hdt.getDictionary().idToString(x, TripleComponentRole.SUBJECT).toString();
     					
     					synchronized(lock) {
@@ -312,40 +326,94 @@ public class HDTFassade {
     					}
     					
     				}); 
-    	System.out.println(hdt.getDictionary().getNsubjects() + " "+hdt.getDictionary().getNshared()+" "+hdt.getDictionary().getNobjects()); 
-    	System.out.println( hdt.getDictionary().idToString(hdt.getDictionary().getNsubjects(), TripleComponentRole.SUBJECT)); 
-    	System.out.println( hdt.getDictionary().idToString(hdt.getDictionary().getNsubjects(), TripleComponentRole.SUBJECT)); 
-    	System.out.println( hdt.getDictionary().idToString(hdt.getDictionary().getNshared()+1, TripleComponentRole.SUBJECT)); 
-    	System.out.println( hdt.getDictionary().idToString(hdt.getDictionary().getNshared()+1, TripleComponentRole.OBJECT));
+//    	System.out.println(hdt.getDictionary().getNsubjects() + " "+hdt.getDictionary().getNshared()+" "+hdt.getDictionary().getNobjects()); 
+//    	System.out.println( hdt.getDictionary().idToString(hdt.getDictionary().getNsubjects(), TripleComponentRole.SUBJECT)); 
+//    	System.out.println( hdt.getDictionary().idToString(hdt.getDictionary().getNsubjects(), TripleComponentRole.SUBJECT)); 
+//    	System.out.println( hdt.getDictionary().idToString(hdt.getDictionary().getNshared()+1, TripleComponentRole.SUBJECT)); 
+//    	System.out.println( hdt.getDictionary().idToString(hdt.getDictionary().getNshared()+1, TripleComponentRole.OBJECT));
     	
     	LongStream.range(hdt.getDictionary().getNshared()+1, hdt.getDictionary().getNsubjects()+1)
     				.parallel()
     				.forEach(x -> {
-    					long out = calculateOutDegreeFromID(x);
+    					long outDegree = calculateOutDegreeFromID(x);
     					String uri = hdt.getDictionary().idToString(x, TripleComponentRole.SUBJECT).toString();
     					synchronized(lock) {
-    						if (!results.containsKey(out)) {
-    							results.put(out, new HashSet<String>()); 
+    						if (!results.containsKey(outDegree)) {
+    							results.put(outDegree, new HashSet<String>()); 
     						}
-    						results.get(out).add(uri); 
+    						results.get(outDegree).add(uri); 
     					}
     					
     				}); 
     	LongStream.range(hdt.getDictionary().getNshared()+1, hdt.getDictionary().getNobjects()+1)
 					.parallel()
 					.forEach(x -> {
-						long in = calculateInDegreeFromID(x);
+						long inDegree = calculateInDegreeFromID(x);
 						String uri = hdt.getDictionary().idToString(x, TripleComponentRole.OBJECT).toString();
 						synchronized(lock) {
-							if (!results.containsKey(in)) {
-								results.put(in, new HashSet<String>()); 
+							if (!results.containsKey(inDegree)) {
+								results.put(inDegree, new HashSet<String>()); 
 							}
-							results.get(in).add(uri); 
+							results.get(inDegree).add(uri); 
 						}
 						
 		}); 
     	return results; 
     }
+    
+    public Map<Long, Set<String>> calculateNodeOutDegrees() {
+    	HashMap<Long, Set<String>> results = new HashMap<Long, Set<String>>(); 
+		System.out.println("Processing "+(hdt.getDictionary().getNsubjects()+1)+"..."); 
+    	LongStream.range(1, hdt.getDictionary().getNsubjects()+1)
+    				.parallel()
+    				.forEach(x -> {
+    					long outDegree = calculateOutDegreeFromID(x);
+    					String uri = hdt.getDictionary().idToString(x, TripleComponentRole.SUBJECT).toString();
+    					synchronized(lock) {
+    						if (!results.containsKey(outDegree)) {
+    							results.put(outDegree, new HashSet<String>()); 
+    						}
+    						results.get(outDegree).add(uri); 
+    					}
+    					
+    				}); 
+    	return results; 
+    }
+    
+    public Map<Long, Set<String>> calculateNodeInDegrees() {
+    	HashMap<Long, Set<String>> results = new HashMap<Long, Set<String>>(); 
+		System.out.println("Processing "+(hdt.getDictionary().getNshared()+1)+"..."); 
+    	LongStream.range(1, hdt.getDictionary().getNshared()+1)
+    				.parallel()
+    				.forEach(x -> {
+    					long inDegree = calculateInDegreeFromID(x);  
+    					String uri = hdt.getDictionary().idToString(x, TripleComponentRole.SUBJECT).toString();
+    					
+    					synchronized(lock) {
+    						if (!results.containsKey(inDegree)) {
+    							results.put(inDegree, new HashSet<String>()); 
+    						}
+    						results.get(inDegree).add(uri); 
+    					}
+    					
+    				}); 
+
+    	LongStream.range(hdt.getDictionary().getNshared()+1, hdt.getDictionary().getNobjects()+1)
+					.parallel()
+					.forEach(x -> {
+						long inDegree = calculateInDegreeFromID(x);
+						String uri = hdt.getDictionary().idToString(x, TripleComponentRole.OBJECT).toString();
+						synchronized(lock) {
+							if (!results.containsKey(inDegree)) {
+								results.put(inDegree, new HashSet<String>()); 
+							}
+							results.get(inDegree).add(uri); 
+						}
+						
+		}); 
+    	return results; 
+    }
+    
     
     public long calculateOutDegreeFromURI (String uri) {
     	long outDegree = 0;
