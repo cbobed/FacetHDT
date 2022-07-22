@@ -1,5 +1,6 @@
 package sid.facetHDT.performanceTests;
 
+import sid.facetHDT.DegreesCalculator;
 import sid.facetHDT.HDTFassade;
 
 import java.io.File;
@@ -53,6 +54,7 @@ public class TopKDegreeExtractor {
 			
 			System.out.println("Loading the HDT ..."); 
 			HDTFassade hdt = new HDTFassade(HDTFilename); 
+			DegreesCalculator degreesCalc = new DegreesCalculator(hdt); 
 			System.out.println("Done."); 
 			
 			System.out.println("Analyzing the degrees of the graph ... "); 
@@ -60,13 +62,13 @@ public class TopKDegreeExtractor {
 			Map<Long, Set<String>> degrees = null; 
 			switch (dir) { 
 				case BOTH: 
-					degrees = hdt.calculateNodeDegrees();
+					degrees = degreesCalc.calculateNodeDegrees();
 					break; 
 				case OUTGOING: 
-					degrees = hdt.calculateNodeOutDegrees(); 
+					degrees = degreesCalc.calculateNodeOutDegrees(); 
 					break; 
 				case INCOMING: 
-					degrees = hdt.calculateNodeInDegrees(); 
+					degrees = degreesCalc.calculateNodeInDegrees(); 
 					break; 
 			}
 			long end = System.nanoTime(); 
